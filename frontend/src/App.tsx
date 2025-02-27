@@ -1,9 +1,11 @@
 import './App.css'
+import MapViewer from './components/MapViewer'
 
-function App() {
+function App(): React.FC {
 
   return (
     <>
+      <MapViewer />
     </>
   )
 }
