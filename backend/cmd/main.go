@@ -15,7 +15,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	http.HandleFunc("/layers", layerController.GetAllLayersHandler)
+	mux.HandleFunc("/layers", layerController.GetAllLayersHandler)
 
 	http.ListenAndServe(":8080", mux)
 }

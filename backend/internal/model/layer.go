@@ -1,6 +1,6 @@
 package model
 
 type Layer struct {
-	Name string
-	Url  string
+	Name string `json:"name"`
+	Url  string `json:"url"`
 }
