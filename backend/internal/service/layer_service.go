@@ -13,6 +13,6 @@ func NewLayerService(repo repository.LayerRepository) *LayerService {
 	return &LayerService{repo: repo}
 }
 
-func (s *LayerService) GetLayers() []model.Layer {
+func (s *LayerService) GetLayers() []model.Wms {
 	return s.repo.GetAllLayers()
 }

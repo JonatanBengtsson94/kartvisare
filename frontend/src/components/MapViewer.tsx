@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Map, View } from 'ol/';
 import { Tile } from 'ol/layer'
 import { TileWMS } from 'ol/source';
+import { WmsLayer } from '../types/MapTypes'
 import './MapViewer.css'
 
 function MapViewer(): React.FC {
   const mapElement = useRef<HTMLDivElement | null>(null);
-  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [wmsLayer, setWmsLayer] = useState<wmsLayer | null>(null);
 
   useEffect(() => {
     const fetchLayers = async () => {
@@ -15,7 +16,7 @@ function MapViewer(): React.FC {
         const data = await response.json();
 
         if (Array.isArray(data) && data.length > 0) {
-          setMapUrl(data[0].url)
+          setWmsLayer(data[0])
         }
         } catch (error) {
         } 
@@ -25,24 +26,26 @@ function MapViewer(): React.FC {
   }, []);
 
   useEffect(() => {
-    if (mapElement.current && mapUrl) {
+    if (mapElement.current && wmsLayer) {
+      const { url, params } = wmsLayer;
+
       const wmsSource = new TileWMS({
-        url: mapUrl,
+        url: url,
         params: {
-          LAYERS: "topp:states",
-          VERSION: "1.1.1",
-          FORMAT: "image/png",
-          SRS: "EPSG:4326",
+          LAYERS: params.LAYERS,
+          VERSION: params.VERSION,
+          FORMAT: params.FORMAT,
+          SRS: params.SRS,
         }
       });
 
-      const wmsLayer = new Tile({
+      const wmsLayerObj = new Tile({
         source: wmsSource,
       });
 
       const map = new Map({
         target: mapElement.current,
-        layers: [wmsLayer],
+        layers: [wmsLayerObj],
         view: new View({
           center: [0, 0],
           zoom: 2
@@ -53,7 +56,7 @@ function MapViewer(): React.FC {
         map.setTarget(null);
       };
     }
-  }, [mapUrl]);;
+  }, [wmsLayer]);;
 
 
 
