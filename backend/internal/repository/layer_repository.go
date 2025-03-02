@@ -13,7 +13,7 @@ type InMemoryLayerRepository struct {
 func NewInMemoryLayerRepository() *InMemoryLayerRepository {
 	return &InMemoryLayerRepository{
 		layers: []model.Layer{
-			{Name: "Topoweb", Url: "https://api.lantmateriet.se/open/topowebb-ccby/v1/wmts?request=GetCapabilities&version=1.0.0&service=wmts"},
+			{Name: "Geoserver demo", Url: "http://localhost:8001/geoserver/ows"},
 		},
 	}
 }
