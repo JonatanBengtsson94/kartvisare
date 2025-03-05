@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: kartvisare_pg
+    environment:
+      POSTGRES_USER: kartvisare
+      POSTGRES_PASSWORD: kartvisare
+      POSTGRES_DB: kartvisare
+    ports:
+      - "5432:5432"
+    volumes:
+      - kartvisare_pg_data:/var/lib/postgresql/data
+
+volumes:
+  kartvisare_pg_data:

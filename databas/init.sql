@@ -6,7 +6,7 @@ CREATE TABLE wms_services (
   is_active BOOLEAN DEFAULT TRUE,
   auth_type VARCHAR(50),
   auth_username TEXT,
-  auth_password TEXT,
+  auth_password TEXT
 );
 
 CREATE TABLE users (
