@@ -1,7 +1,7 @@
 use crate::repository::wms_repository::WmsRepository;
 use reqwest::{
     header::{HeaderMap, AUTHORIZATION},
-    Client, Error, Response, StatusCode,
+    Client, StatusCode,
 };
 use std::collections::HashMap;
 
@@ -18,10 +18,24 @@ impl<R: WmsRepository> WmsService<R> {
         &self,
         id: u32,
         query_params: HashMap<String, String>,
-    ) -> Result<Response, Error> {
+    ) -> Result<reqwest::Response, axum::Error> {
         let wms = match self.repository.get_by_id(id) {
             Some(wms) => wms,
-            None => {}
+            None => {
+                return Err(axum::Error::new("WMS not found").into());
+            }
         };
+
+        let mut request_builder = Client::new().get(&wms.url);
+
+        // Handle wms authentication here
+
+        let response = request_builder
+            .query(&query_params)
+            .send()
+            .await
+            .map_err(|e| axum::Error::new(format!("Failed to forward WMS request: {}", e)))?;
+
+        Ok(response)
     }
 }
