@@ -16,3 +16,7 @@ func NewWmsService(repo repository.WmsRepository) *WmsService {
 func (s *WmsService) GetAll() []model.Wms {
 	return s.repo.GetAll()
 }
+
+func (s *WmsService) GetById(id int) *model.Wms {
+	return s.repo.GetById(id)
+}

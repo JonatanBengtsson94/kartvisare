@@ -4,6 +4,7 @@ import "backend/internal/model"
 
 type WmsRepository interface {
 	GetAll() []model.Wms
+	GetById(int) *model.Wms
 }
 
 type InMemoryWmsRepository struct {
@@ -23,6 +24,15 @@ func NewInMemoryWmsRepository() *InMemoryWmsRepository {
 	}
 }
 
-func (repo *InMemoryWmsRepository) GetAll() []model.Wms {
-	return repo.wms
+func (r *InMemoryWmsRepository) GetAll() []model.Wms {
+	return r.wms
+}
+
+func (r *InMemoryWmsRepository) GetById(id int) *model.Wms {
+	for _, wms := range r.wms {
+		if wms.ID == id {
+			return &wms
+		}
+	}
+	return nil
 }

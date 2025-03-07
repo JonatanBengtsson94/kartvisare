@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	// Layers
 	wmsRepository := repository.NewInMemoryWmsRepository()
 	wmsService := service.NewWmsService(wmsRepository)
 	wmsController := controller.NewWmsController(wmsService)
@@ -16,6 +15,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/wms", wmsController.GetAllWmsHandler)
+	mux.HandleFunc("/wms/", wmsController.GetWmsByIdHandler)
 
 	http.ListenAndServe(":8080", mux)
 }
