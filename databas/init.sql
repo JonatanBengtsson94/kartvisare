@@ -1,6 +1,8 @@
 CREATE TABLE wms (
-  layer_id SERIAL PRIMARY KEY,
+  wms_id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  description TEXT,
+  layers TEXT,
   url VARCHAR(255) NOT NULL,
   version VARCHAR(5),
   is_active BOOLEAN DEFAULT TRUE,

@@ -1,14 +1,14 @@
 package model
 
-type WmsParams struct {
-	Layers  string `json:"LAYERS"`
-	Version string `json:"VERSION"`
-	Format  string `json:"FORMAT"`
-	SRS     string `json:"SRS"`
-}
-
 type Wms struct {
-	Name   string    `json:"name"`
-	Url    string    `json:"url"`
-	Params WmsParams `json:"params"`
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Layers      []string `json:"layers"`
+	Url         string   `json:"url"`
+	Version     string   `json:"version"`
+	IsActive    bool     `json:"is_active"`
+	AuthType    string   `json:"auth_type"`
+	Username    string   `json:"username"`
+	Password    string   `json:"password"`
 }

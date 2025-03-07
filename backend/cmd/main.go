@@ -9,13 +9,13 @@ import (
 
 func main() {
 	// Layers
-	layerRepository := repository.NewInMemoryLayerRepository()
-	layerService := service.NewLayerService(layerRepository)
-	layerController := controller.NewLayerController(layerService)
+	wmsRepository := repository.NewInMemoryWmsRepository()
+	wmsService := service.NewWmsService(wmsRepository)
+	wmsController := controller.NewWmsController(wmsService)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/layers", layerController.GetAllLayersHandler)
+	mux.HandleFunc("/wms", wmsController.GetAllWmsHandler)
 
 	http.ListenAndServe(":8080", mux)
 }
