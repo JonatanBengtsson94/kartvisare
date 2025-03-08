@@ -13,10 +13,10 @@ func NewWmsService(repo repository.WmsRepository) *WmsService {
 	return &WmsService{repo: repo}
 }
 
-func (s *WmsService) GetAll() []model.Wms {
+func (s *WmsService) GetAll() ([]model.Wms, error) {
 	return s.repo.GetAll()
 }
 
-func (s *WmsService) GetById(id int) *model.Wms {
+func (s *WmsService) GetById(id int) (*model.Wms, error) {
 	return s.repo.GetById(id)
 }

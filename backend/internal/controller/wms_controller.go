@@ -17,7 +17,10 @@ func NewWmsController(service *service.WmsService) *WmsController {
 }
 
 func (c *WmsController) GetAllWmsHandler(w http.ResponseWriter, r *http.Request) {
-	wms := c.service.GetAll()
+	wms, error := c.service.GetAll()
+	if error != nil {
+		http.Error(w, "Failed to fetch WMS", http.StatusInternalServerError)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(wms)
 }
@@ -36,7 +39,10 @@ func (c *WmsController) GetWmsByIdHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	wms := c.service.GetById(id)
+	wms, error := c.service.GetById(id)
+	if error != nil {
+		http.Error(w, "Failed to fetch WMS", http.StatusInternalServerError)
+	}
 	if wms == nil {
 		http.Error(w, "WMS not found", http.StatusNotFound)
 		return
