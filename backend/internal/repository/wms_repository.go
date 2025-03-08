@@ -5,6 +5,6 @@ import (
 )
 
 type WmsRepository interface {
-	GetAll() []model.Wms
-	GetById(int) *model.Wms
+	GetAll() ([]model.Wms, error)
+	GetById(int) (*model.Wms, error)
 }

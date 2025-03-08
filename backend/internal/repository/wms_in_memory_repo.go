@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/internal/model"
+	"errors"
 	"sync"
 )
 
@@ -24,7 +25,7 @@ func NewInMemoryWmsRepository() *InMemoryWmsRepository {
 	}
 }
 
-func (r *InMemoryWmsRepository) GetAll() []model.Wms {
+func (r *InMemoryWmsRepository) GetAll() ([]model.Wms, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -32,16 +33,16 @@ func (r *InMemoryWmsRepository) GetAll() []model.Wms {
 	for _, wms := range r.wms {
 		wmsList = append(wmsList, wms)
 	}
-	return wmsList
+	return wmsList, nil
 }
 
-func (r *InMemoryWmsRepository) GetById(id int) *model.Wms {
+func (r *InMemoryWmsRepository) GetById(id int) (*model.Wms, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	wms, exists := r.wms[id]
 	if !exists {
-		return nil
+		return nil, errors.New("WMS not found")
 	}
-	return &wms
+	return &wms, nil
 }
