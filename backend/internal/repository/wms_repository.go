@@ -1,6 +1,9 @@
 package repository
 
-import "backend/internal/model"
+import (
+	"backend/internal/model"
+	"sync"
+)
 
 type WmsRepository interface {
 	GetAll() []model.Wms
@@ -8,13 +11,15 @@ type WmsRepository interface {
 }
 
 type InMemoryWmsRepository struct {
-	wms []model.Wms
+	mu  sync.RWMutex
+	wms map[int]model.Wms
 }
 
 func NewInMemoryWmsRepository() *InMemoryWmsRepository {
 	return &InMemoryWmsRepository{
-		wms: []model.Wms{
-			{
+		wms: map[int]model.Wms{
+			1: {
+				ID:          1,
 				Name:        "Geoserver demo",
 				Url:         "http://localhost:8001/geoserver/ows",
 				Description: "Demo layer",
@@ -25,14 +30,23 @@ func NewInMemoryWmsRepository() *InMemoryWmsRepository {
 }
 
 func (r *InMemoryWmsRepository) GetAll() []model.Wms {
-	return r.wms
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	wmsList := make([]model.Wms, 0, len(r.wms))
+	for _, wms := range r.wms {
+		wmsList = append(wmsList, wms)
+	}
+	return wmsList
 }
 
 func (r *InMemoryWmsRepository) GetById(id int) *model.Wms {
-	for _, wms := range r.wms {
-		if wms.ID == id {
-			return &wms
-		}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	wms, exists := r.wms[id]
+	if !exists {
+		return nil
 	}
-	return nil
+	return &wms
 }

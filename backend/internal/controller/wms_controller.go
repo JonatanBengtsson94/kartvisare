@@ -33,11 +33,13 @@ func (c *WmsController) GetWmsByIdHandler(w http.ResponseWriter, r *http.Request
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
 	}
 
 	wms := c.service.GetById(id)
 	if wms == nil {
 		http.Error(w, "WMS not found", http.StatusNotFound)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(wms)
