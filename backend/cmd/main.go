@@ -6,27 +6,34 @@ import (
 	"backend/internal/service"
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"net/http"
 	"os"
 )
 
 func main() {
-	/*
-		db, err := initPg()
-		if err != nil {
-			os.Exit(1)
-		}
+	db, err := initPg()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-		wmsRepository := repository.NewPostGresWmsRepository(db)
-	*/
-	wmsRepository := repository.NewInMemoryWmsRepository()
+	// WMS
+	//wmsRepository := repository.NewInMemoryWmsRepository()
+	wmsRepository := repository.NewPostGresWmsRepository(db)
 	wmsService := service.NewWmsService(wmsRepository)
 	wmsController := controller.NewWmsController(wmsService)
+
+	// User
+	userRepository := repository.NewPostGresUserRepository(db)
+	userService := service.NewUserService(userRepository)
+	userController := controller.NewUserController(userService)
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/wms", wmsController.GetAllWmsHandler)
 	mux.HandleFunc("/wms/", wmsController.GetWmsByIdHandler)
+	mux.HandleFunc("/users", userController.GetAllUsersHandler)
 
 	fmt.Println("Server running on port 8080")
 	http.ListenAndServe(":8080", mux)
