@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "Starting container"
+sudo docker compose up -d
+
 echo "Copying sql script to container..."
 sudo docker cp ./init.sql kartvisare_pg:/tmp/init.sql
 

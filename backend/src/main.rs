@@ -1,15 +1,21 @@
 use std::env;
 
 use axum::{routing::get, Router};
-use controller::user_controller;
-use repository::user_repository::PostgresUserRepository;
-use service::user_service::UserService;
+use controller::{user_controller, wms_controller};
+use repository::{user_repository::PostgresUserRepository, wms_repository::PostgresWmsRepository};
+use service::{user_service::UserService, wms_service::WmsService};
 use sqlx::PgPool;
 
 mod controller;
 mod domain;
 mod repository;
 mod service;
+
+#[derive(Clone)]
+struct AppState {
+    user_service: UserService<PostgresUserRepository>,
+    wms_service: WmsService<PostgresWmsRepository>,
+}
 
 #[tokio::main]
 async fn main() {
@@ -28,12 +34,22 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
-    let repository = PostgresUserRepository::new(pool);
-    let service = UserService::new(repository);
+    let user_repository = PostgresUserRepository::new(pool.clone());
+    let user_service = UserService::new(user_repository);
+
+    let wms_repository = PostgresWmsRepository::new(pool.clone());
+    let wms_service = WmsService::new(wms_repository);
+
+    let app_state = AppState {
+        user_service,
+        wms_service,
+    };
 
     let app: Router = Router::new()
         .route("/users", get(user_controller::get_users))
-        .with_state(service);
+        .route("/wms", get(wms_controller::get_wms_summaries))
+        .route("/wms/{id}", get(wms_controller::get_wms_details))
+        .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

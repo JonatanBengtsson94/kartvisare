@@ -1,2 +1,3 @@
 pub mod user;
-pub mod wms;
+pub mod wms_details;
+pub mod wms_summary;
