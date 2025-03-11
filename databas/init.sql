@@ -2,7 +2,7 @@ CREATE TABLE wms (
   wms_id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  layers TEXT,
+  layers TEXT[] NOT NULL CHECK (array_length(layers, 1) > 0),
   url VARCHAR(255) NOT NULL,
   version VARCHAR(5),
   is_active BOOLEAN DEFAULT TRUE,
