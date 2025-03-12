@@ -22,6 +22,11 @@ impl<R: WmsRepository> WmsService<R> {
         let wms = self.repository.get_wms_details(id).await?;
         Ok(wms)
     }
+
+    pub async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error> {
+        let inserted_id = self.repository.add_wms(wms_details).await?;
+        Ok(inserted_id)
+    }
 }
 
 #[cfg(test)]
@@ -37,6 +42,7 @@ mod tests {
         impl WmsRepository for WmsRepositoryMock {
             async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
             async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
+            async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
         }
     }
 
@@ -75,7 +81,7 @@ mod tests {
             .with(eq(1))
             .returning(|_| {
                 Ok(Some(WmsDetails {
-                    id: 1,
+                    id: Some(1),
                     name: "States".to_string(),
                     description: Some("usa population".to_string()),
                     layers: vec!["topp:states".to_string()],
@@ -112,5 +118,44 @@ mod tests {
 
         let details = service.get_wms_details(999).await.unwrap();
         assert!(details.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_add_wms() {
+        let mut mock_repo = MockWmsRepositoryMock::new();
+
+        mock_repo
+            .expect_add_wms()
+            .with(eq(WmsDetails {
+                id: None,
+                name: "States".to_string(),
+                description: None,
+                layers: vec!["topp.states".to_string()],
+                url: "http://localhost:8001/geoserver/topp/wms".to_string(),
+                version: None,
+                is_active: true,
+                auth_type: None,
+                auth_username: None,
+                auth_password: None,
+            }))
+            .returning(|_| Ok(123));
+
+        let service = WmsService::new(mock_repo);
+
+        let wms_details = WmsDetails {
+            id: None,
+            name: "States".to_string(),
+            description: None,
+            layers: vec!["topp.states".to_string()],
+            url: "http://localhost:8001/geoserver/topp/wms".to_string(),
+            version: None,
+            is_active: true,
+            auth_type: None,
+            auth_username: None,
+            auth_password: None,
+        };
+
+        let result = service.add_wms(wms_details).await;
+        assert_eq!(result.unwrap(), 123);
     }
 }

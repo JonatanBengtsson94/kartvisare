@@ -18,6 +18,7 @@ impl PostgresWmsRepository {
 pub trait WmsRepository {
     async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
     async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
+    async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
 }
 
 #[async_trait]
@@ -65,6 +66,28 @@ impl WmsRepository for PostgresWmsRepository {
             })),
             None => Ok(None),
         }
+    }
+
+    async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error> {
+        let query = r#"
+        INSERT INTO wms (name, description, layers, url, version, is_active, auth_type, auth_username, auth_password)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING wms_id
+        "#;
+
+        let result = sqlx::query(query)
+            .bind(&wms_details.name)
+            .bind(&wms_details.description)
+            .bind(&wms_details.layers)
+            .bind(&wms_details.url)
+            .bind(&wms_details.version)
+            .bind(&wms_details.is_active)
+            .bind(&wms_details.auth_type)
+            .bind(&wms_details.auth_username)
+            .bind(&wms_details.auth_password)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(result.get("wms_id"))
     }
 }
 
@@ -187,6 +210,33 @@ mod tests {
         assert_eq!(details.auth_type.unwrap_or_default(), "Basic");
         assert_eq!(details.auth_username.unwrap_or_default(), "username");
         assert_eq!(details.auth_password.unwrap_or_default(), "password");
+
+        pool.execute("TRUNCATE TABLE wms RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_add_wms() {
+        let pool = setup_db().await;
+        let repo = PostgresWmsRepository::new(pool.clone());
+
+        let wms_details = WmsDetails {
+            id: None,
+            name: "States".to_string(),
+            description: None,
+            layers: vec!["topp.states".to_string()],
+            url: "http://localhost:8001/geoserver/topp/wms".to_string(),
+            version: None,
+            is_active: true,
+            auth_type: None,
+            auth_username: None,
+            auth_password: None,
+        };
+
+        let inserted_id = repo.add_wms(wms_details).await.unwrap();
+
+        assert!(inserted_id > 0, "Expected a valid wms_id to be returned");
 
         pool.execute("TRUNCATE TABLE wms RESTART IDENTITY CASCADE")
             .await

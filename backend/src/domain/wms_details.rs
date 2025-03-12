@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct WmsDetails {
-    pub id: i32,
+    pub id: Option<i32>,
     pub name: String,
     pub description: Option<String>,
     pub layers: Vec<String>,
