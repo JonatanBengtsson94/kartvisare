@@ -11,6 +11,12 @@ CREATE TABLE wms (
   auth_password TEXT
 );
 
+CREATE TABLE wms_groups (
+  group_id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  parent_id INTEGER REFERENCES wms_groups(group_id) ON DELETE CASCADE
+);
+
 CREATE TABLE users (
   user_id SERIAL PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE
