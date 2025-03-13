@@ -1,3 +1,9 @@
+CREATE TABLE wms_groups (
+  group_id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  parent_id INTEGER REFERENCES wms_groups(group_id) ON DELETE CASCADE
+);
+
 CREATE TABLE wms (
   wms_id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -8,13 +14,8 @@ CREATE TABLE wms (
   is_active BOOLEAN DEFAULT TRUE,
   auth_type VARCHAR(50),
   auth_username TEXT,
-  auth_password TEXT
-);
-
-CREATE TABLE wms_groups (
-  group_id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  parent_id INTEGER REFERENCES wms_groups(group_id) ON DELETE CASCADE
+  auth_password TEXT,
+  group_id INTEGER REFERENCES wms_groups(group_id) ON DELETE SET NULL
 );
 
 CREATE TABLE users (
