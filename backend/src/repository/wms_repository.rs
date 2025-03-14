@@ -1,7 +1,11 @@
 use async_trait::async_trait;
-use sqlx::{PgPool, Row};
+use sqlx::{query, PgPool, Row};
 
-use crate::domain::{wms_details::WmsDetails, wms_summary::WmsSummary};
+use crate::domain::{
+    wms_details::{self, WmsDetails},
+    wms_group::WmsGroup,
+    wms_summary::WmsSummary,
+};
 
 #[derive(Clone)]
 pub struct PostgresWmsRepository {
@@ -12,6 +16,49 @@ impl PostgresWmsRepository {
     pub fn new(pool: PgPool) -> Self {
         PostgresWmsRepository { pool }
     }
+
+    async fn get_subgroup(&self, parent_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error> {
+        let group_query = "SELECT group_id, name FROM wms_groups WHERE parent_id = $1";
+        let group_rows = sqlx::query(group_query)
+            .bind(parent_id)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let mut wms_groups = Vec::new();
+        for group_row in group_rows {
+            let group_id: i32 = group_row.get("group_id");
+            let group_name: String = group_row.get("name");
+
+            let wms = self.get_wms_in_group(group_id).await?;
+            let sub_groups = Box::pin(self.get_subgroup(group_id));
+            let sub_groups = sub_groups.await?;
+
+            wms_groups.push(WmsGroup {
+                id: group_id,
+                name: group_name,
+                wms: Some(wms),
+                sub_groups: Some(sub_groups),
+            });
+        }
+        Ok(wms_groups)
+    }
+
+    async fn get_wms_in_group(&self, group_id: i32) -> Result<Vec<WmsSummary>, sqlx::Error> {
+        let query = "SELECT wms_id, name FROM wms WHERE group_id = $1";
+        let rows = sqlx::query(query)
+            .bind(group_id)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let wms: Vec<WmsSummary> = rows
+            .into_iter()
+            .map(|wms| WmsSummary {
+                id: wms.get("wms_id"),
+                name: wms.get("name"),
+            })
+            .collect();
+        Ok(wms)
+    }
 }
 
 #[async_trait]
@@ -19,10 +66,32 @@ pub trait WmsRepository {
     async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
     async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
     async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
+    async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error>;
 }
 
 #[async_trait]
 impl WmsRepository for PostgresWmsRepository {
+    async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error> {
+        let query = "SELECT group_id, name FROM wms_groups WHERE parent_id IS NULL";
+        let rows = sqlx::query(query).fetch_all(&self.pool).await?;
+
+        let mut wms_groups = Vec::new();
+        for row in rows {
+            let group_id: i32 = row.get("group_id");
+            let group_name: String = row.get("name");
+            let wms = self.get_wms_in_group(group_id).await?;
+            let sub_groups = self.get_subgroup(group_id).await?;
+
+            wms_groups.push(WmsGroup {
+                id: group_id,
+                name: group_name,
+                wms: Some(wms),
+                sub_groups: Some(sub_groups),
+            });
+        }
+        Ok(wms_groups)
+    }
+
     async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error> {
         let query = r#"
         SELECT wms_id, name FROM wms
