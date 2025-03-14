@@ -163,10 +163,12 @@ impl WmsRepository for PostgresWmsRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenv::dotenv;
     use sqlx::{Executor, PgPool};
     use std::env;
 
     async fn setup_db() -> PgPool {
+        dotenv().ok();
         let db_host = env::var("DB_HOST").expect("DB_HOST must be set in the environment");
         let db_port = env::var("DB_PORT").expect("DB_PORT must be set in the environment");
         let db_user = env::var("DB_USER").expect("DB_USER must be set in the environment");

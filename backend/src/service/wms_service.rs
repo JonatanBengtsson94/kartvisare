@@ -31,6 +31,8 @@ impl<R: WmsRepository> WmsService<R> {
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::wms_group::WmsGroup;
+
     use super::*;
     use async_trait::async_trait;
     use mockall::{mock, predicate::*};
@@ -43,6 +45,7 @@ mod tests {
             async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
             async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
             async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
+            async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error>;
         }
     }
 
