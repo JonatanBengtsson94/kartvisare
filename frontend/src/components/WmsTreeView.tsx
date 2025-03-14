@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { WmsGroup } from '../types/wmsTypes.ts';
+import WmsGroupNode from './WmsGroupNode.tsx'
 
 
 const WmsTreeView: React.FC = () => {
@@ -34,27 +35,15 @@ const WmsTreeView: React.FC = () => {
     return <p>Error: {error}</p>
   }
 
-  const renderWmsGroup = (group: WmsGroup) => {
-    return (
-      <li key={group.id}>
-          {group.name}
-          {group.sub_groups && group.sub_groups.length > 0 && (
-            <ul>
-              {group.sub_groups.map((subGroup) => renderWmsGroup(subGroup))}
-            </ul>
-          )}
-          {group.wms && group.wms.length > 0 && (
-            <ul>
-              {group.wms.map((wms) => (
-              <li key={wms.id}>{wms.name}</li>
-              ))}
-            </ul>
-          )}
-      </li>
-    );
-  };
-
-  return <ul>{wmsGroups.map((group) => renderWmsGroup(group))}</ul>
+  return (
+    <div className="wmsTreeContainer">
+      <ul>
+        {wmsGroups.map((group) => (
+          <WmsGroupNode key={group.id} group={group} />
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 
