@@ -1,5 +1,7 @@
 use std::env;
 
+use dotenv::dotenv;
+
 use axum::{
     routing::{get, post},
     Router,
@@ -22,6 +24,8 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     let db_host = env::var("DB_HOST").expect("DB_HOST must be set in the environment");
     let db_port = env::var("DB_PORT").expect("DB_PORT must be set in the environment");
     let db_user = env::var("DB_USER").expect("DB_USER must be set in the environment");

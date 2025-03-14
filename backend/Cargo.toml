@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.87"
 axum = "0.8.1"
+dotenv = "0.15.0"
 serde = { version = "1.0.218", features = ["derive"]}
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-native-tls"] }
 tokio = { version = "1.44.0", features = ["rt-multi-thread"]}
