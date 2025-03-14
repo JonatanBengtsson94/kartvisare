@@ -187,6 +187,10 @@ mod tests {
             .await
             .unwrap();
 
+        pool.execute("TRUNCATE table wms_groups RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
+
         pool
     }
 
@@ -229,6 +233,53 @@ mod tests {
         pool.execute("TRUNCATE TABLE wms RESTART IDENTITY CASCADE")
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_wmsgroups() {
+        let pool = setup_db().await;
+        let repo = PostgresWmsRepository::new(pool.clone());
+
+        sqlx::query(
+            r#"
+            INSERT INTO wms_groups (name) VALUES ('World')
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            r#"
+            INSERT INTO wms_groups (name, parent_id) VALUES ('Usa', 1)
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            r#"
+            INSERT INTO wms (name, layers, url, is_active, group_id) 
+            VALUES ('States', ARRAY['topp:states'], 'http://localhost:8001/geoserver/wms', true, 2);
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let wms_groups = repo.get_wms_groups().await.unwrap();
+
+        assert_eq!(wms_groups.len(), 1);
+        assert_eq!(wms_groups[0].name, "World");
+
+        let sub_groups = wms_groups[0].sub_groups.as_ref().unwrap();
+        assert_eq!(sub_groups.len(), 1);
+        assert_eq!(sub_groups[0].name, "Usa");
+
+        let wms = sub_groups[0].wms.as_ref().unwrap();
+        assert_eq!(wms.len(), 1);
+        assert_eq!(wms[0].name, "States");
     }
 
     #[tokio::test]
