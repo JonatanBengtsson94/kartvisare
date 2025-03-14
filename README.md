@@ -17,5 +17,8 @@ DB_NAME=kartvisare
 Starta applikationen genom att köra ``cargo run`` i /backend
 
 ### Frontend
-1. Fyll i miljövariabler i...
-2. Starta frontend genoma att köra npm run dev i ``/frontend``
+Skapa en .env fil under /frontend med följande innehåll:
+```
+VITE_API_BASEURL=http://localhost:3000
+```
+Starta frontend genoma att köra ``npm run dev`` i /frontend
