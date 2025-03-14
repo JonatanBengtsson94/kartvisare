@@ -57,6 +57,7 @@ async fn main() {
         .route("/wms", get(wms_controller::get_wms_summaries))
         .route("/wms", post(wms_controller::add_wms))
         .route("/wms/{id}", get(wms_controller::get_wms_details))
+        .route("/wms_groups", get(wms_controller::get_wms_groups))
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

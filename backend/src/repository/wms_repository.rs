@@ -1,11 +1,7 @@
 use async_trait::async_trait;
-use sqlx::{query, PgPool, Row};
+use sqlx::{PgPool, Row};
 
-use crate::domain::{
-    wms_details::{self, WmsDetails},
-    wms_group::WmsGroup,
-    wms_summary::WmsSummary,
-};
+use crate::domain::{wms_details::WmsDetails, wms_group::WmsGroup, wms_summary::WmsSummary};
 
 #[derive(Clone)]
 pub struct PostgresWmsRepository {

@@ -7,6 +7,13 @@ use axum::{
 
 use crate::{domain::wms_details::WmsDetails, AppState};
 
+pub async fn get_wms_groups(State(state): State<AppState>) -> impl IntoResponse {
+    match state.wms_service.get_wms_groups().await {
+        Ok(wms_groups) => Json(wms_groups).into_response(),
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
+}
+
 pub async fn get_wms_summaries(State(state): State<AppState>) -> impl IntoResponse {
     match state.wms_service.get_wms_summaries().await {
         Ok(summaries) => Json(summaries).into_response(),

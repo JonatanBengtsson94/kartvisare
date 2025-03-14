@@ -1,5 +1,5 @@
 use crate::{
-    domain::{wms_details::WmsDetails, wms_summary::WmsSummary},
+    domain::{wms_details::WmsDetails, wms_group::WmsGroup, wms_summary::WmsSummary},
     repository::wms_repository::WmsRepository,
 };
 
@@ -26,6 +26,11 @@ impl<R: WmsRepository> WmsService<R> {
     pub async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error> {
         let inserted_id = self.repository.add_wms(wms_details).await?;
         Ok(inserted_id)
+    }
+
+    pub async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error> {
+        let wms_groups = self.repository.get_wms_groups().await?;
+        Ok(wms_groups)
     }
 }
 
@@ -160,5 +165,25 @@ mod tests {
 
         let result = service.add_wms(wms_details).await;
         assert_eq!(result.unwrap(), 123);
+    }
+
+    #[tokio::test]
+    async fn test_get_wms_groups() {
+        let mut mock_repo = MockWmsRepositoryMock::new();
+
+        mock_repo.expect_get_wms_groups().returning(|| {
+            Ok(vec![WmsGroup {
+                id: 1,
+                name: "test".to_string(),
+                wms: None,
+                sub_groups: None,
+            }])
+        });
+
+        let service = WmsService::new(mock_repo);
+
+        let wms_group = service.get_wms_groups().await.unwrap();
+        assert_eq!(wms_group.len(), 1);
+        assert_eq!(wms_group[0].name, "test");
     }
 }
