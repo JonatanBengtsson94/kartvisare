@@ -1,15 +1,12 @@
-import './App.css'
 import MapViewer from './components/MapViewer'
-import WmsTreeView from './components/WmsTreeView.tsx'
 
 function App(): React.FC {
 
-  return (
-    <>
-      <WmsTreeView />
-      <MapViewer />
-    </>
-  )
+return (
+  <>
+    <MapViewer />
+  </>
+)
 }
 
 export default App

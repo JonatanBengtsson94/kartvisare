@@ -1,45 +1,24 @@
-import { useEffect, useState } from 'react';
+import './WmsTreeView.css'
+
 import { WmsGroup } from '../types/wmsTypes.ts';
 import WmsGroupNode from './WmsGroupNode.tsx'
 
+interface WmsTreeViewProps {
+  group: WmsGroup;
+  onWmsChange: (checked: boolean, wmsId: number) => void;
+}
 
-const WmsTreeView: React.FC = () => {
-  const wmsGroupApiUrl = import.meta.env.VITE_API_BASEURL + "/wms_groups";
-  const [wmsGroups, setWmsGroups] = useState<Wms[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(wmsGroupApiUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch WMS list');
-        }
-        return response.json();
-      })
-      .then((data: Wms[]) => {
-        setWmsGroups(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return <p>Loading available WMS...</p>
-  }
-
-  if (error) {
-    return <p>Error: {error}</p>
-  }
-
+const WmsTreeView: React.FC<WmsTreeViewProps> = ({ group, onWmsChange}) => {
   return (
     <div className="wmsTreeContainer">
       <ul>
-        {wmsGroups.map((group) => (
-          <WmsGroupNode key={group.id} group={group} />
+        {group.map((group) => (
+          <WmsGroupNode
+            key={group.id}
+            group={group}
+            level={0}
+            onWmsChange={onWmsChange}
+          />
         ))}
       </ul>
     </div>
