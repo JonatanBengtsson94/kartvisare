@@ -39,18 +39,39 @@ impl PostgresWmsRepository {
         Ok(wms_groups)
     }
 
-    async fn get_wms_in_group(&self, group_id: i32) -> Result<Vec<WmsSummary>, sqlx::Error> {
-        let query = "SELECT wms_id, name FROM wms WHERE group_id = $1";
+    async fn get_wms_in_group(&self, group_id: i32) -> Result<Vec<WmsDetails>, sqlx::Error> {
+        let query = r#"
+        SELECT
+        wms_id,
+        name,
+        description,
+        layers,
+        url,
+        version,
+        is_active,
+        auth_type,
+        auth_username,
+        auth_password
+        FROM wms WHERE group_id = $1
+        "#;
         let rows = sqlx::query(query)
             .bind(group_id)
             .fetch_all(&self.pool)
             .await?;
 
-        let wms: Vec<WmsSummary> = rows
+        let wms: Vec<WmsDetails> = rows
             .into_iter()
-            .map(|wms| WmsSummary {
+            .map(|wms| WmsDetails {
                 id: wms.get("wms_id"),
                 name: wms.get("name"),
+                description: wms.get("description"),
+                layers: wms.get("layers"),
+                url: wms.get("url"),
+                version: wms.get("version"),
+                is_active: wms.get("is_active"),
+                auth_type: wms.get("auth_type"),
+                auth_username: wms.get("auth_username"),
+                auth_password: wms.get("auth_password"),
             })
             .collect();
         Ok(wms)
