@@ -1,7 +1,10 @@
+import './Canvas.css'
+
 import { useEffect, useRef } from 'react';
 import { Wms } from '../types/wmsTypes.ts'
 import { Map as OlMap, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
+import TileWMS from 'ol/source/TileWMS';
 
 interface CanvasProps{
   wms: Wms[];
@@ -28,7 +31,7 @@ const Canvas: React.FC<CanvasProps> = ({ wms }) => {
     if (currentMap) {
       wms.forEach((wms) => {
         if (!layerInstances.current.has(wms.id)) {
-          const tileLayer = new TileLayer({
+          const tileLayer = new TileWMS({
             source: new TileLayer({
               url: wms.url,
               params: {

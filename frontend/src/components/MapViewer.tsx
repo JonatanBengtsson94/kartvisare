@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { WmsGroup } from '../types/wmsTypes.ts';
+import { WmsGroup, Wms } from '../types/wmsTypes.ts';
 import WmsTreeView from './WmsTreeView.tsx';
 import Canvas from './Canvas.tsx';
 
@@ -61,7 +61,7 @@ function MapViewer(): React.FC {
         );
         setLoading(false);
     }
-  }, [selectedWmsIds, selectedWms]);
+  }, [selectedWmsIds]);
 
   const handleWmsChange = (checked: boolean, wmsId: number) => {
     if (checked) {

@@ -11,9 +11,14 @@ export interface Wms {
   authUsername: string,
 }
 
+export interface WmsSummary {
+  id: number,
+  name: string,
+}
+
 export interface WmsGroup {
   id: number,
   name: string,
-  wms: Wms[],
+  wms: WmsSummary[],
   groups: WmsGroup[],
 }
