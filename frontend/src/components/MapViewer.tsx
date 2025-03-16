@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { WmsGroup } from '../types/wmsTypes.ts';
 import WmsTreeView from './WmsTreeView.tsx';
+import Canvas from './Canvas.tsx';
 
 function MapViewer(): React.FC {
   const [selectedWms, setSelectedWms] = useState<number[]>([]);
@@ -45,10 +46,15 @@ function MapViewer(): React.FC {
   }
 
   return (
+    <>
     <WmsTreeView
       group={wmsGroups}
       onWmsChange={handleWmsChange}
     />
+    <Canvas
+      wms={selectedWms}
+    />
+    </>
   );
 };
 
