@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use sqlx::{PgPool, Row};
 
-use crate::domain::{wms_details::WmsDetails, wms_group::WmsGroup, wms_summary::WmsSummary};
+use crate::domain::{wms_details::WmsDetails, wms_group::WmsGroup};
 
 #[derive(Clone)]
 pub struct PostgresWmsRepository {
@@ -39,18 +39,39 @@ impl PostgresWmsRepository {
         Ok(wms_groups)
     }
 
-    async fn get_wms_in_group(&self, group_id: i32) -> Result<Vec<WmsSummary>, sqlx::Error> {
-        let query = "SELECT wms_id, name FROM wms WHERE group_id = $1";
+    async fn get_wms_in_group(&self, group_id: i32) -> Result<Vec<WmsDetails>, sqlx::Error> {
+        let query = r#"
+        SELECT
+        wms_id,
+        name,
+        description,
+        layers,
+        url,
+        version,
+        is_active,
+        auth_type,
+        auth_username,
+        auth_password
+        FROM wms WHERE group_id = $1
+        "#;
         let rows = sqlx::query(query)
             .bind(group_id)
             .fetch_all(&self.pool)
             .await?;
 
-        let wms: Vec<WmsSummary> = rows
+        let wms: Vec<WmsDetails> = rows
             .into_iter()
-            .map(|wms| WmsSummary {
+            .map(|wms| WmsDetails {
                 id: wms.get("wms_id"),
                 name: wms.get("name"),
+                description: wms.get("description"),
+                layers: wms.get("layers"),
+                url: wms.get("url"),
+                version: wms.get("version"),
+                is_active: wms.get("is_active"),
+                auth_type: wms.get("auth_type"),
+                auth_username: wms.get("auth_username"),
+                auth_password: wms.get("auth_password"),
             })
             .collect();
         Ok(wms)
@@ -59,8 +80,7 @@ impl PostgresWmsRepository {
 
 #[async_trait]
 pub trait WmsRepository {
-    async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
-    async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
+    async fn get_wms(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
     async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
     async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error>;
 }
@@ -88,24 +108,7 @@ impl WmsRepository for PostgresWmsRepository {
         Ok(wms_groups)
     }
 
-    async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error> {
-        let query = r#"
-        SELECT wms_id, name FROM wms
-        "#;
-
-        let rows = sqlx::query(query).fetch_all(&self.pool).await?;
-
-        let wms: Vec<WmsSummary> = rows
-            .into_iter()
-            .map(|wms| WmsSummary {
-                id: wms.get("wms_id"),
-                name: wms.get("name"),
-            })
-            .collect();
-        Ok(wms)
-    }
-
-    async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error> {
+    async fn get_wms(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error> {
         let query = r#"
         SELECT wms_id, name, description, layers, url, version, is_active, auth_type, auth_username, auth_password
         FROM wms WHERE wms_id = $1
@@ -193,47 +196,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_wms_summaries() {
-        let pool = setup_db().await;
-        let repo = PostgresWmsRepository::new(pool.clone());
-
-        sqlx::query(
-            r#"
-            INSERT INTO wms (
-                name,
-                layers,
-                url,
-                is_active
-            ) 
-            VALUES 
-            ($1, $2, $3, $4),
-            ($5, $6, $7, $8)
-            "#,
-        )
-        .bind("States") // $1
-        .bind(vec!["topp:states".to_string()]) // $2
-        .bind("http://localhost:8001/geoserver/topp/wms") // $3
-        .bind(true) // $4
-        .bind("Manhattan Roads") // $5
-        .bind(vec!["tiger:tiger_roads".to_string()]) // $6
-        .bind("http://localhost:8001/geoserver/tiger/wms") // $7
-        .bind(true) // $8
-        .execute(&pool)
-        .await
-        .unwrap();
-
-        let summaries = repo.get_wms_summaries().await.unwrap();
-
-        assert_eq!(summaries.len(), 2);
-        assert_eq!(summaries[0].name, "States");
-        assert_eq!(summaries[1].name, "Manhattan Roads");
-
-        pool.execute("TRUNCATE TABLE wms RESTART IDENTITY CASCADE")
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
     async fn test_get_wmsgroups() {
         let pool = setup_db().await;
         let repo = PostgresWmsRepository::new(pool.clone());
@@ -281,7 +243,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_wms_details() {
+    async fn test_get_wms() {
         let pool = setup_db().await;
         let repo = PostgresWmsRepository::new(pool.clone());
 
@@ -315,7 +277,7 @@ mod tests {
         .await
         .unwrap();
 
-        let details = repo.get_wms_details(1).await.unwrap();
+        let details = repo.get_wms(1).await.unwrap();
 
         assert!(details.is_some());
         let details = details.unwrap();
