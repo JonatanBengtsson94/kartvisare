@@ -5,6 +5,7 @@ import { Wms } from '../types/wmsTypes.ts'
 import { Map as OlMap, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
 import TileWMS from 'ol/source/TileWMS';
+import OSM from 'ol/source/OSM';
 
 interface CanvasProps{
   wms: Wms[];
@@ -23,16 +24,26 @@ const Canvas: React.FC<CanvasProps> = ({ wms }) => {
         target: mapRef.current,
         layers: [],
         view: new View({
+          center: [0, 0],
+          zoom: 2,
         }),
       });
     }
 
     const currentMap = mapInstance.current;
+
+    if (currentMap && currentMap.getLayers().getLength() === 0) {
+      const baseLayer = new TileLayer({
+        source: new OSM(),
+      });
+      currentMap.addLayer(baseLayer);
+    }
+
     if (currentMap) {
       wms.forEach((wms) => {
         if (!layerInstances.current.has(wms.id)) {
-          const tileLayer = new TileWMS({
-            source: new TileLayer({
+          const tileLayer = new TileLayer({
+            source: new TileWMS({
               url: wms.url,
               params: {
                 LAYERS: wms.layers,
