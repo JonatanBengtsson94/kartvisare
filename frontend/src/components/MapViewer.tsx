@@ -4,8 +4,10 @@ import WmsTreeView from './WmsTreeView.tsx';
 import Canvas from './Canvas.tsx';
 
 function MapViewer(): React.FC {
-  const [selectedWms, setSelectedWms] = useState<number[]>([]);
+  const [selectedWmsIds, setSelectedWmsIds] = useState<number[]>([]);
+  const [selectedWms, setSelectedWms] = useState<Wms[]>([]);
   const wmsGroupApiUrl = import.meta.env.VITE_API_BASEURL + "/wms_groups";
+  const wmsApiUrl = import.meta.env.VITE_API_BASEURL + "/wms";
   const [wmsGroups, setWmsGroups] = useState<WmsGroup[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,13 +30,46 @@ function MapViewer(): React.FC {
       });
   }, []);
 
+  useEffect(() => {
+    const idsToFetch = selectedWmsIds.filter(
+      id => !selectedWms.some(wms => wms.id === id)
+    );
+
+    if (idsToFetch.length > 0) {
+      setLoading(true);
+      setError(null);
+      Promise.all(
+        idsToFetch.map((id) =>
+          fetch(`${wmsApiUrl}/${id}`)
+            .then((response) => response.json())
+            .catch((error) => {
+              throw new Error('Failed to fetch wms with ID ${id}');
+            })
+        )
+      )
+        .then((newWmsLayers: Wms[]) => {
+          setSelectedWms((prevSelectedWms) => [...prevSelectedWms, ...newWmsLayers]);
+          setLoading(false);
+        })
+        .catch((error) => {
+          setError(error.message);
+          setLoading(false);
+        });
+      } else {
+        setSelectedWms(
+          selectedWmsIds.map(id => selectedWms.find(wms => wms.id === id) as Wms)
+        );
+        setLoading(false);
+    }
+  }, [selectedWmsIds, selectedWms]);
+
   const handleWmsChange = (checked: boolean, wmsId: number) => {
     if (checked) {
-      setSelectedWms((prevSelected) => [...prevSelected, wmsId]);
+      setSelectedWmsIds((prevSelected) => [...prevSelected, wmsId]);
     } else {
-      setSelectedWms((prevSelected) => prevSelected.filter(id => id !== wmsId));
+      setSelectedWmsIds((prevSelected) => prevSelected.filter(id => id !== wmsId));
     }
-    console.log('Selected layers:', selectedWms);
+    console.log('Selected layers:', selectedWmsIds);
   };
 
   if (loading) {
