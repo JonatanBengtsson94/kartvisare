@@ -1,3 +1,7 @@
+.wmsList {
+  background-color: lightgrey;
+}
+
 .wmsLayerControl {
   display: flex;
   align-items: center;

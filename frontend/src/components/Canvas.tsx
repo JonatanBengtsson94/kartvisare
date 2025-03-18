@@ -1,13 +1,13 @@
-import './Canvas.css'
+import "./Canvas.css";
 
-import { useEffect, useRef } from 'react';
-import { Wms } from '../types/wmsTypes.ts'
-import { Map as OlMap, View } from 'ol';
-import TileLayer from 'ol/layer/Tile';
-import TileWMS from 'ol/source/TileWMS';
-import OSM from 'ol/source/OSM';
+import { useEffect, useRef } from "react";
+import { Wms } from "../types/wmsTypes.ts";
+import { Map as OlMap, View } from "ol";
+import TileLayer from "ol/layer/Tile";
+import TileWMS from "ol/source/TileWMS";
+import OSM from "ol/source/OSM";
 
-interface CanvasProps{
+interface CanvasProps {
   wms: Wms[];
 }
 
@@ -21,6 +21,7 @@ const Canvas: React.FC<CanvasProps> = ({ wms }) => {
 
     if (!mapInstance.current && mapRef.current) {
       mapInstance.current = new OlMap({
+        controls: [],
         target: mapRef.current,
         layers: [],
         view: new View({
@@ -49,31 +50,31 @@ const Canvas: React.FC<CanvasProps> = ({ wms }) => {
                 LAYERS: wms.layers,
               },
             }),
-        });
+          });
 
-        currentMap.addLayer(tileLayer);
-        currentLayerInstances.set(wms.id, tileLayer);
-      }
-    });
+          currentMap.addLayer(tileLayer);
+          currentLayerInstances.set(wms.id, tileLayer);
+        }
+      });
 
-    layerInstances.current.forEach((layer, id) => {
-      if (!wms.some((wms) => wms.id === id)) {
-        currentMap.removeLayer(layer);
-        currentLayerInstances.delete(id);
-      }
-    });
-  }
-
-  return () => {
-    const currentMap = mapInstance.current;
-    if (currentMap) {
-      currentMap.getLayers().clear();
-      currentLayerInstances.clear();
+      layerInstances.current.forEach((layer, id) => {
+        if (!wms.some((wms) => wms.id === id)) {
+          currentMap.removeLayer(layer);
+          currentLayerInstances.delete(id);
+        }
+      });
     }
-  };
-}, [wms]);
 
-  return <div className="canvas" ref={mapRef} />
+    return () => {
+      const currentMap = mapInstance.current;
+      if (currentMap) {
+        currentMap.getLayers().clear();
+        currentLayerInstances.clear();
+      }
+    };
+  }, [wms]);
+
+  return <div className="canvas" ref={mapRef} />;
 };
 
 export default Canvas;
