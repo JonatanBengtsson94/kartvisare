@@ -13,7 +13,11 @@ impl PostgresWmsRepository {
         PostgresWmsRepository { pool }
     }
 
-    async fn get_subgroup(&self, parent_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error> {
+    async fn get_subgroup(
+        &self,
+        parent_id: i32,
+        user_id: i32,
+    ) -> Result<Vec<WmsGroup>, sqlx::Error> {
         let group_query = "SELECT group_id, name FROM wms_groups WHERE parent_id = $1";
         let group_rows = sqlx::query(group_query)
             .bind(parent_id)
@@ -25,8 +29,8 @@ impl PostgresWmsRepository {
             let group_id: i32 = group_row.get("group_id");
             let group_name: String = group_row.get("name");
 
-            let wms = self.get_wms_in_group(group_id).await?;
-            let sub_groups = Box::pin(self.get_subgroup(group_id));
+            let wms = self.get_wms_in_group(group_id, user_id).await?;
+            let sub_groups = Box::pin(self.get_subgroup(group_id, user_id));
             let sub_groups = sub_groups.await?;
 
             wms_groups.push(WmsGroup {
@@ -39,10 +43,24 @@ impl PostgresWmsRepository {
         Ok(wms_groups)
     }
 
-    async fn get_wms_in_group(&self, group_id: i32) -> Result<Vec<WmsSummary>, sqlx::Error> {
-        let query = "SELECT wms_id, name FROM wms WHERE group_id = $1";
+    async fn get_wms_in_group(
+        &self,
+        group_id: i32,
+        user_id: i32,
+    ) -> Result<Vec<WmsSummary>, sqlx::Error> {
+        let query = r#"
+            SELECT wms.wms_id, wms.name
+            FROM wms
+            INNER JOIN wms_user_groups_membership AS wugm
+                ON wms.wms_id = wugm.wms_id
+            INNER JOIN user_group_membership AS ugm
+                ON ugm.group_id = wugm.group_id
+            WHERE wms.group_id = $1
+            AND ugm.user_id= $2
+        "#;
         let rows = sqlx::query(query)
             .bind(group_id)
+            .bind(user_id)
             .fetch_all(&self.pool)
             .await?;
 
@@ -62,12 +80,12 @@ pub trait WmsRepository {
     async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
     async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
     async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
-    async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error>;
+    async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error>;
 }
 
 #[async_trait]
 impl WmsRepository for PostgresWmsRepository {
-    async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error> {
+    async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error> {
         let query = "SELECT group_id, name FROM wms_groups WHERE parent_id IS NULL";
         let rows = sqlx::query(query).fetch_all(&self.pool).await?;
 
@@ -75,8 +93,8 @@ impl WmsRepository for PostgresWmsRepository {
         for row in rows {
             let group_id: i32 = row.get("group_id");
             let group_name: String = row.get("name");
-            let wms = self.get_wms_in_group(group_id).await?;
-            let sub_groups = self.get_subgroup(group_id).await?;
+            let wms = self.get_wms_in_group(group_id, user_id).await?;
+            let sub_groups = self.get_subgroup(group_id, user_id).await?;
 
             wms_groups.push(WmsGroup {
                 id: group_id,
@@ -189,6 +207,22 @@ mod tests {
             .await
             .unwrap();
 
+        pool.execute("TRUNCATE table users RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
+
+        pool.execute("TRUNCATE table user_groups RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
+
+        pool.execute("TRUNCATE table wms_user_groups_membership RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
+
+        pool.execute("TRUNCATE table user_group_membership RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
+
         pool
     }
 
@@ -266,7 +300,43 @@ mod tests {
         .await
         .unwrap();
 
-        let wms_groups = repo.get_wms_groups().await.unwrap();
+        sqlx::query(
+            r#"
+            INSERT INTO users (username) VALUES ('Bob');
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            r#"
+            INSERT INTO user_groups (group_name) VALUES ('Admins');
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            r#"
+            INSERT INTO user_group_membership (user_id, group_id) VALUES (1, 1);
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            r#"
+            INSERT INTO wms_user_groups_membership (wms_id, group_id) VALUES (1, 1);
+            "#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let wms_groups = repo.get_wms_groups(1).await.unwrap();
 
         assert_eq!(wms_groups.len(), 1);
         assert_eq!(wms_groups[0].name, "World");

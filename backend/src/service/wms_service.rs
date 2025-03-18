@@ -28,8 +28,8 @@ impl<R: WmsRepository> WmsService<R> {
         Ok(inserted_id)
     }
 
-    pub async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error> {
-        let wms_groups = self.repository.get_wms_groups().await?;
+    pub async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error> {
+        let wms_groups = self.repository.get_wms_groups(user_id).await?;
         Ok(wms_groups)
     }
 }
@@ -50,7 +50,7 @@ mod tests {
             async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
             async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
             async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
-            async fn get_wms_groups(&self) -> Result<Vec<WmsGroup>, sqlx::Error>;
+            async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error>;
         }
     }
 
@@ -171,18 +171,21 @@ mod tests {
     async fn test_get_wms_groups() {
         let mut mock_repo = MockWmsRepositoryMock::new();
 
-        mock_repo.expect_get_wms_groups().returning(|| {
-            Ok(vec![WmsGroup {
-                id: 1,
-                name: "test".to_string(),
-                wms: None,
-                sub_groups: None,
-            }])
-        });
+        mock_repo
+            .expect_get_wms_groups()
+            .with(eq(1))
+            .returning(|_| {
+                Ok(vec![WmsGroup {
+                    id: 1,
+                    name: "test".to_string(),
+                    wms: None,
+                    sub_groups: None,
+                }])
+            });
 
         let service = WmsService::new(mock_repo);
 
-        let wms_group = service.get_wms_groups().await.unwrap();
+        let wms_group = service.get_wms_groups(1).await.unwrap();
         assert_eq!(wms_group.len(), 1);
         assert_eq!(wms_group[0].name, "test");
     }
