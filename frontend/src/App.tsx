@@ -1,12 +1,11 @@
-import MapViewer from './components/MapViewer'
+import MapViewer from "./components/MapViewer";
 
 function App(): React.FC {
-
-return (
-  <>
-    <MapViewer />
-  </>
-)
+  return (
+    <>
+      <MapViewer />
+    </>
+  );
 }
 
-export default App
+export default App;

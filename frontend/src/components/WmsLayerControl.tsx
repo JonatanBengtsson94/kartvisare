@@ -6,14 +6,13 @@ import { Wms } from '../types/wmsTypes.ts';
 interface WmsLayerControlProps {
   wms: Wms;
   onChange: (checked: boolean, wmsId: number) => void;
+  checked: boolean;
 }
 
-const WmsLayerControl: React.FC<WmsLayerControlProps> = ({ wms, onChange }) => {
-  const [isChecked, setIsChecked] = useState<boolean>(false);
+const WmsLayerControl: React.FC<WmsLayerControlProps> = ({ wms, onChange, checked }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
-    setIsChecked(checked);
     onChange(checked, wms.id)
   }
 
@@ -21,7 +20,7 @@ const WmsLayerControl: React.FC<WmsLayerControlProps> = ({ wms, onChange }) => {
   <div className="wmsLayerControl">
     <input
       type="checkbox"
-      checked={isChecked}
+      checked={checked}
       onChange={handleChange}
       id={wms.id}
     />

@@ -1,29 +1,32 @@
 import './WmsGroupNode.css'
 
-import { useState } from 'react';
 import { WmsGroup } from '../types/wmsTypes.ts';
 import WmsLayerControl from './WmsLayerControl.tsx';
 
 interface WmsGroupNodeProps {
   group: WmsGroup;
   level: number;
+  toggleExpand: (groupId: number) => void;
   onWmsChange: (checked: boolean, wmsId: number) => void;
+  checkedWms: number[];
+  expandedGroups: number[];
 }
 
-const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({ group, level, onWmsChange }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
-
+const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({ 
+  group,
+  level,
+  toggleExpand,
+  onWmsChange,
+  checkedWms,
+  expandedGroups,
+}) => {
   const marginLeft = `${level * 20}px`;
 
   return (
     <li>
-      <button className="groupNodeButton" onClick={toggleExpand}>
+      <button className="groupNodeButton" onClick={() => toggleExpand(group.id)}>
         <span
-          className={`arrow ${isExpanded ? 'expanded' : ''}`}
+          className={`arrow ${expandedGroups.includes(group.id) ? 'expanded' : ''}`}
           style={{ marginLeft }}>
         </span>
         <span
@@ -32,7 +35,7 @@ const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({ group, level, onWmsChange }
           {group.name}
         </span>
       </button>
-      {isExpanded && (
+      {expandedGroups.includes(group.id) && (
         <ul>
           {group.sub_groups && group.sub_groups.length > 0 && (
             <ul>
@@ -41,7 +44,10 @@ const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({ group, level, onWmsChange }
                   key={subGroup.id}
                   group={subGroup}
                   level={level + 1}
+                  toggleExpand={toggleExpand}
                   onWmsChange={onWmsChange}
+                  checkedWms={checkedWms}
+                  expandedGroups={expandedGroups}
                 />
               ))}
             </ul>
@@ -53,6 +59,7 @@ const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({ group, level, onWmsChange }
                   <WmsLayerControl
                     wms={wms} 
                     onChange={onWmsChange}
+                    checked={checkedWms.includes(wms.id)}
                   />
                 </li>
               })}
