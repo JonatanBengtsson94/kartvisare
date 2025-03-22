@@ -1,7 +1,7 @@
-import './WmsGroupNode.css'
+import "./WmsGroupNode.css";
 
-import { WmsGroup } from '../types/wmsTypes.ts';
-import WmsLayerControl from './WmsLayerControl.tsx';
+import { WmsGroup } from "../types/wmsTypes.ts";
+import WmsLayerControl from "./WmsLayerControl.tsx";
 
 interface WmsGroupNodeProps {
   group: WmsGroup;
@@ -12,26 +12,27 @@ interface WmsGroupNodeProps {
   expandedGroups: number[];
 }
 
-const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({ 
+const WmsGroupNode = ({
   group,
   level,
   toggleExpand,
   onWmsChange,
   checkedWms,
   expandedGroups,
-}) => {
+}): WmsGroupNodeProps => {
   const marginLeft = `${level * 20}px`;
 
   return (
     <li>
-      <button className="groupNodeButton" onClick={() => toggleExpand(group.id)}>
+      <button
+        className="groupNodeButton"
+        onClick={() => toggleExpand(group.id)}
+      >
         <span
-          className={`arrow ${expandedGroups.includes(group.id) ? 'expanded' : ''}`}
-          style={{ marginLeft }}>
-        </span>
-        <span
-          className="groupName" 
-          style={{ marginLeft }}>
+          className={`arrow ${expandedGroups.includes(group.id) ? "expanded" : ""}`}
+          style={{ marginLeft }}
+        ></span>
+        <span className="groupName" style={{ marginLeft }}>
           {group.name}
         </span>
       </button>
@@ -39,29 +40,35 @@ const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({
         <ul>
           {group.sub_groups && group.sub_groups.length > 0 && (
             <ul>
-              {group.sub_groups.map((subGroup) => (
-                <WmsGroupNode
-                  key={subGroup.id}
-                  group={subGroup}
-                  level={level + 1}
-                  toggleExpand={toggleExpand}
-                  onWmsChange={onWmsChange}
-                  checkedWms={checkedWms}
-                  expandedGroups={expandedGroups}
-                />
-              ))}
+              {group.sub_groups.map(
+                (subGroup) =>
+                  (subGroup.sub_groups.length > 0 ||
+                    subGroup.wms.length > 0) && (
+                    <WmsGroupNode
+                      key={subGroup.id}
+                      group={subGroup}
+                      level={level + 1}
+                      toggleExpand={toggleExpand}
+                      onWmsChange={onWmsChange}
+                      checkedWms={checkedWms}
+                      expandedGroups={expandedGroups}
+                    />
+                  ),
+              )}
             </ul>
           )}
           {group.wms && group.wms.length > 0 && (
             <ul className="wmsList">
               {group.wms.map((wms) => {
-                return <li key={wms.id} style={{ marginLeft }}>
-                  <WmsLayerControl
-                    wms={wms} 
-                    onChange={onWmsChange}
-                    checked={checkedWms.includes(wms.id)}
-                  />
-                </li>
+                return (
+                  <li key={wms.id} style={{ marginLeft }}>
+                    <WmsLayerControl
+                      wms={wms}
+                      onChange={onWmsChange}
+                      checked={checkedWms.includes(wms.id)}
+                    />
+                  </li>
+                );
               })}
             </ul>
           )}
@@ -69,6 +76,6 @@ const WmsGroupNode: React.FC<WmsGroupNodeProps> = ({
       )}
     </li>
   );
-}
+};
 
 export default WmsGroupNode;

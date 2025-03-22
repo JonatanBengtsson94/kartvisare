@@ -11,13 +11,13 @@ interface WmsTreeViewProps {
   toggleGroupExpansion: (groupId: number) => void;
 }
 
-const WmsTreeView: React.FC<WmsTreeViewProps> = ({
+const WmsTreeView = ({
   groups,
   onWmsChange,
   checkedWms,
   expandedGroups,
   toggleGroupExpansion,
-}) => {
+}: WmsTreeViewProps) => {
   return (
     <div className="wmsTreeContainer">
       <ul>
