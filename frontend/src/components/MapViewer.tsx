@@ -12,11 +12,10 @@ function MapViewer(): React.FC {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const wmsGroupApiUrl = import.meta.env.VITE_API_BASEURL + "/wms_groups";
   const wmsApiUrl = import.meta.env.VITE_API_BASEURL + "/wms";
 
   useEffect(() => {
-    fetch(wmsGroupApiUrl)
+    fetch(wmsApiUrl)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch WMS list");
