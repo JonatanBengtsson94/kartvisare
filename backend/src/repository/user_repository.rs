@@ -64,9 +64,15 @@ mod tests {
             .await
             .expect("Failed to connect to database");
 
-        pool.execute("DELETE FROM users").await.unwrap();
+        clean_db(&pool).await;
 
         pool
+    }
+
+    async fn clean_db(pool: &PgPool) {
+        pool.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
+            .await
+            .unwrap();
     }
 
     #[tokio::test]

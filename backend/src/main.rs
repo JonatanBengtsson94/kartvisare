@@ -54,10 +54,9 @@ async fn main() {
 
     let app: Router = Router::new()
         .route("/users", get(user_controller::get_users))
-        .route("/wms", get(wms_controller::get_wms_summaries))
+        .route("/wms", get(wms_controller::get_wms_groups))
         .route("/wms", post(wms_controller::add_wms))
-        .route("/wms/{id}", get(wms_controller::get_wms_details))
-        .route("/wms_groups", get(wms_controller::get_wms_groups))
+        .route("/wms/{id}", get(wms_controller::get_wms_by_id))
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

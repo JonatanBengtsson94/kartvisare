@@ -34,6 +34,12 @@ CREATE TABLE user_group_membership (
   PRIMARY KEY (user_id, group_id)
 );
 
+CREATE TABLE wms_user_groups_membership (
+  wms_id INT REFERENCES wms(wms_id) ON DELETE CASCADE,
+  group_id INT REFERENCES user_groups(group_id) ON DELETE CASCADE,
+  PRIMARY KEY (wms_id, group_id)
+);
+
 CREATE TABLE sessions (
   session_token UUID PRIMARY KEY,
   user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
