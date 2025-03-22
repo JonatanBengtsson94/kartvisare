@@ -9,25 +9,20 @@ use crate::{domain::wms_details::WmsDetails, AppState};
 
 pub async fn get_wms_groups(State(state): State<AppState>) -> impl IntoResponse {
     // TODO: Get user HERE
-    let user_id: i32 = 1;
+    let user_id: i32 = 2;
     match state.wms_service.get_wms_groups(user_id).await {
         Ok(wms_groups) => Json(wms_groups).into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub async fn get_wms_summaries(State(state): State<AppState>) -> impl IntoResponse {
-    match state.wms_service.get_wms_summaries().await {
-        Ok(summaries) => Json(summaries).into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    }
-}
-
-pub async fn get_wms_details(
+pub async fn get_wms_by_id(
     Path(id): Path<i32>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    match state.wms_service.get_wms_details(id).await {
+    // TODO: Get user HERE
+    let user_id: i32 = 2;
+    match state.wms_service.get_wms_by_id(id, user_id).await {
         Ok(Some(details)) => Json(details).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),

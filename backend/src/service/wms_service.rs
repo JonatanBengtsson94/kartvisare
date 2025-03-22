@@ -1,5 +1,5 @@
 use crate::{
-    domain::{wms_details::WmsDetails, wms_group::WmsGroup, wms_summary::WmsSummary},
+    domain::{wms_details::WmsDetails, wms_group::WmsGroup},
     repository::wms_repository::WmsRepository,
 };
 
@@ -13,13 +13,12 @@ impl<R: WmsRepository> WmsService<R> {
         WmsService { repository }
     }
 
-    pub async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error> {
-        let wms = self.repository.get_wms_summaries().await?;
-        Ok(wms)
-    }
-
-    pub async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error> {
-        let wms = self.repository.get_wms_details(id).await?;
+    pub async fn get_wms_by_id(
+        &self,
+        wms_id: i32,
+        user_id: i32,
+    ) -> Result<Option<WmsDetails>, sqlx::Error> {
+        let wms = self.repository.get_wms_by_id(wms_id, user_id).await?;
         Ok(wms)
     }
 
@@ -47,47 +46,20 @@ mod tests {
 
         #[async_trait]
         impl WmsRepository for WmsRepositoryMock {
-            async fn get_wms_summaries(&self) -> Result<Vec<WmsSummary>, sqlx::Error>;
-            async fn get_wms_details(&self, id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
+            async fn get_wms_by_id(&self, wms_id: i32, user_id: i32) -> Result<Option<WmsDetails>, sqlx::Error>;
             async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
             async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error>;
         }
     }
 
     #[tokio::test]
-    async fn test_get_wms_summaries() {
-        let mut mock_repo = MockWmsRepositoryMock::new();
-
-        mock_repo.expect_get_wms_summaries().returning(|| {
-            Ok(vec![
-                WmsSummary {
-                    id: 1,
-                    name: "States".to_string(),
-                },
-                WmsSummary {
-                    id: 2,
-                    name: "Manhattan Roads".to_string(),
-                },
-            ])
-        });
-
-        let service = WmsService::new(mock_repo);
-
-        let summaries = service.get_wms_summaries().await.unwrap();
-
-        assert_eq!(summaries.len(), 2);
-        assert_eq!(summaries[0].name, "States");
-        assert_eq!(summaries[1].name, "Manhattan Roads");
-    }
-
-    #[tokio::test]
-    async fn test_get_wms_details_found() {
+    async fn test_get_wms_by_id_found() {
         let mut mock_repo = MockWmsRepositoryMock::new();
 
         mock_repo
-            .expect_get_wms_details()
-            .with(eq(1))
-            .returning(|_| {
+            .expect_get_wms_by_id()
+            .with(eq(1), eq(1))
+            .returning(|_, _| {
                 Ok(Some(WmsDetails {
                     id: Some(1),
                     name: "States".to_string(),
@@ -104,7 +76,7 @@ mod tests {
 
         let service = WmsService::new(mock_repo);
 
-        let details = service.get_wms_details(1).await.unwrap();
+        let details = service.get_wms_by_id(1, 1).await.unwrap();
 
         assert!(details.is_some());
         let details = details.unwrap();
@@ -118,13 +90,13 @@ mod tests {
         let mut mock_repo = MockWmsRepositoryMock::new();
 
         mock_repo
-            .expect_get_wms_details()
-            .with(eq(999))
-            .returning(|_| Ok(None));
+            .expect_get_wms_by_id()
+            .with(eq(999), eq(1))
+            .returning(|_, _| Ok(None));
 
         let service = WmsService::new(mock_repo);
 
-        let details = service.get_wms_details(999).await.unwrap();
+        let details = service.get_wms_by_id(999, 1).await.unwrap();
         assert!(details.is_none());
     }
 
