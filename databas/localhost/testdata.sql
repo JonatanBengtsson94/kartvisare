@@ -2,8 +2,8 @@ INSERT INTO wms_groups (name) VALUES ('World');
 INSERT INTO wms_groups (name, parent_id) VALUES ('Usa', 1);
 INSERT INTO wms_groups (name, parent_id) VALUES ('Europe', 1);
 
-INSERT INTO users (username) VALUES ('John');
-INSERT INTO users (username) VALUES ('Jane');
+INSERT INTO users (user_name, user_id) VALUES ('John', 'abc');
+INSERT INTO users (user_name, user_id) VALUES ('Jane', 'def');
 
 INSERT INTO user_groups (group_name) VALUES ('Standard');
 INSERT INTO user_groups (group_name) VALUES ('Admins');
