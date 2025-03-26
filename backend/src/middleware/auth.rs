@@ -14,6 +14,15 @@ pub async fn auth_middleware<B>(
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
+    let session_header = request.headers().get("X-Session-ID");
+
+    let session_id = match session_header {
+        Some(session_id) => session_id.to_str().ok().map(|s| s.to_string()),
+        None => None,
+    };
+
+    // TODO: Retrieve session from Redis
+
     let auth_header = request
         .headers()
         .get("Authorization")

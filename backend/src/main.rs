@@ -24,6 +24,7 @@ struct AppState {
     user_service: UserService<PostgresUserRepository>,
     wms_service: WmsService<PostgresWmsRepository>,
     idp_service: MockIdpService,
+    session_service: SessionService<RedisSessionStore>,
 }
 
 #[tokio::main]
@@ -57,6 +58,7 @@ async fn main() {
         user_service,
         wms_service,
         idp_service,
+        session_service,
     };
 
     let app: Router = Router::new()
