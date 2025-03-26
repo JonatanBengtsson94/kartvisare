@@ -1,40 +1,32 @@
 use axum::{
-    body::Body,
-    extract::{Path, Request, State},
+    extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    Extension, Json,
 };
 
-use crate::{domain::wms_details::WmsDetails, AppState};
+use crate::{domain::wms_details::WmsDetails, repository::repo_error::RepoError, AppState};
 
 pub async fn get_wms_groups(
     State(state): State<AppState>,
-    request: Request<Body>,
+    Extension(user_id): Extension<i32>,
 ) -> impl IntoResponse {
-    let user_id = request.extensions().get::<i32>();
-    match user_id {
-        Some(id) => match state.wms_service.get_wms_groups(*id).await {
-            Ok(wms_groups) => Json(wms_groups).into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        },
-        None => StatusCode::UNAUTHORIZED.into_response(),
+    match state.wms_service.get_wms_groups(user_id).await {
+        Ok(wms_groups) => Json(wms_groups).into_response(),
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
 pub async fn get_wms_by_id(
     Path(id): Path<i32>,
     State(state): State<AppState>,
-    request: Request<Body>,
+    Extension(user_id): Extension<i32>,
 ) -> impl IntoResponse {
-    let user_id = request.extensions().get::<i32>();
-    match user_id {
-        Some(u_id) => match state.wms_service.get_wms_by_id(id, *u_id).await {
-            Ok(Some(details)) => Json(details).into_response(),
-            Ok(None) => StatusCode::NOT_FOUND.into_response(),
-            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        },
-        None => StatusCode::UNAUTHORIZED.into_response(),
+    match state.wms_service.get_wms_by_id(id, user_id).await {
+        Ok(details) => Json(details).into_response(),
+        Err(RepoError::Forbidden) => StatusCode::FORBIDDEN.into_response(),
+        Err(RepoError::NotFound) => StatusCode::NOT_FOUND.into_response(),
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
@@ -44,6 +36,7 @@ pub async fn add_wms(
 ) -> impl IntoResponse {
     match state.wms_service.add_wms(payload).await {
         Ok(wms_id) => (StatusCode::CREATED, Json(wms_id)).into_response(),
+        Err(RepoError::Forbidden) => StatusCode::FORBIDDEN.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }

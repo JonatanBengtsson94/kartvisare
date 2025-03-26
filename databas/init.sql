@@ -21,6 +21,7 @@ CREATE TABLE wms (
 CREATE TABLE users (
   user_id SERIAL PRIMARY KEY,
   user_name VARCHAR(255) NOT NULL UNIQUE,
+  idp_id VARCHAR(255)
 );
 
 CREATE TABLE user_groups (
@@ -39,3 +40,6 @@ CREATE TABLE wms_user_groups_membership (
   group_id INT REFERENCES user_groups(group_id) ON DELETE CASCADE,
   PRIMARY KEY (wms_id, group_id)
 );
+
+INSERT INTO user_groups (group_name) VALUES ('Admin');
+INSERT INTO users (user_name, idp_id) VALUES ('kartvisare', 'kartvisare');

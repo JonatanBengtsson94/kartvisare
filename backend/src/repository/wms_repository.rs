@@ -3,6 +3,8 @@ use sqlx::{PgPool, Row};
 
 use crate::domain::{wms_details::WmsDetails, wms_group::WmsGroup, wms_summary::WmsSummary};
 
+use super::repo_error::RepoError;
+
 #[derive(Clone)]
 pub struct PostgresWmsRepository {
     pool: PgPool,
@@ -77,27 +79,32 @@ impl PostgresWmsRepository {
 
 #[async_trait]
 pub trait WmsRepository {
-    async fn get_wms_by_id(
-        &self,
-        wms_id: i32,
-        user_id: i32,
-    ) -> Result<Option<WmsDetails>, sqlx::Error>;
-    async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error>;
-    async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error>;
+    async fn get_wms_by_id(&self, wms_id: i32, user_id: i32) -> Result<WmsDetails, RepoError>;
+    async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, RepoError>;
+    async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, RepoError>;
 }
 
 #[async_trait]
 impl WmsRepository for PostgresWmsRepository {
-    async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, sqlx::Error> {
+    async fn get_wms_groups(&self, user_id: i32) -> Result<Vec<WmsGroup>, RepoError> {
         let query = "SELECT group_id, name FROM wms_groups WHERE parent_id IS NULL";
-        let rows = sqlx::query(query).fetch_all(&self.pool).await?;
+        let rows = sqlx::query(query)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(RepoError::DatabaseError)?;
 
         let mut wms_groups = Vec::new();
         for row in rows {
             let group_id: i32 = row.get("group_id");
             let group_name: String = row.get("name");
-            let wms = self.get_wms_in_group(group_id, user_id).await?;
-            let sub_groups = self.get_subgroup(group_id, user_id).await?;
+            let wms = self
+                .get_wms_in_group(group_id, user_id)
+                .await
+                .map_err(RepoError::DatabaseError)?;
+            let sub_groups = self
+                .get_subgroup(group_id, user_id)
+                .await
+                .map_err(RepoError::DatabaseError)?;
 
             wms_groups.push(WmsGroup {
                 id: group_id,
@@ -109,11 +116,7 @@ impl WmsRepository for PostgresWmsRepository {
         Ok(wms_groups)
     }
 
-    async fn get_wms_by_id(
-        &self,
-        wms_id: i32,
-        user_id: i32,
-    ) -> Result<Option<WmsDetails>, sqlx::Error> {
+    async fn get_wms_by_id(&self, wms_id: i32, user_id: i32) -> Result<WmsDetails, RepoError> {
         let query = r#"
         SELECT wms.wms_id, wms.name, wms.description, wms.layers, wms.url, wms.version, wms.is_active, wms.auth_type, wms.auth_username, wms.auth_password
         FROM wms
@@ -129,10 +132,11 @@ impl WmsRepository for PostgresWmsRepository {
             .bind(wms_id)
             .bind(user_id)
             .fetch_optional(&self.pool)
-            .await?;
+            .await
+            .map_err(RepoError::DatabaseError)?;
 
         match row {
-            Some(r) => Ok(Some(WmsDetails {
+            Some(r) => Ok(WmsDetails {
                 id: r.get("wms_id"),
                 name: r.get("name"),
                 description: r.get("description"),
@@ -143,12 +147,25 @@ impl WmsRepository for PostgresWmsRepository {
                 auth_type: r.get("auth_type"),
                 auth_username: r.get("auth_username"),
                 auth_password: r.get("auth_password"),
-            })),
-            None => Ok(None),
+            }),
+            None => {
+                let query = "SELECT wms_id FROM wms WHERE wms_id = $1";
+                let row = sqlx::query(query)
+                    .bind(wms_id)
+                    .fetch_optional(&self.pool)
+                    .await
+                    .map_err(RepoError::DatabaseError)?;
+
+                if row.is_some() {
+                    return Err(RepoError::Forbidden);
+                } else {
+                    return Err(RepoError::NotFound);
+                }
+            }
         }
     }
 
-    async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, sqlx::Error> {
+    async fn add_wms(&self, wms_details: WmsDetails) -> Result<i32, RepoError> {
         let query = r#"
         INSERT INTO wms (name, description, layers, url, version, is_active, auth_type, auth_username, auth_password)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING wms_id
@@ -165,7 +182,8 @@ impl WmsRepository for PostgresWmsRepository {
             .bind(&wms_details.auth_username)
             .bind(&wms_details.auth_password)
             .fetch_one(&self.pool)
-            .await?;
+            .await
+            .map_err(RepoError::DatabaseError)?;
 
         Ok(result.get("wms_id"))
     }
@@ -262,7 +280,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO users (username) VALUES ('Bob');
+            INSERT INTO users (user_name) VALUES ('Bob');
             "#,
         )
         .execute(&pool)
@@ -317,7 +335,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO users (username) VALUES ('Bob');
+            INSERT INTO users (user_name) VALUES ('Bob');
             "#,
         )
         .execute(&pool)
@@ -392,8 +410,6 @@ mod tests {
 
         let details = repo.get_wms_by_id(1, 1).await.unwrap();
 
-        assert!(details.is_some());
-        let details = details.unwrap();
         assert_eq!(details.name, "States");
         assert_eq!(details.description.unwrap_or_default(), "usa population");
         assert_eq!(details.layers, vec!["topp:states"]);

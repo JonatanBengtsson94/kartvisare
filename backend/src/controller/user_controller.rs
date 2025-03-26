@@ -8,3 +8,9 @@ pub async fn get_users(State(state): State<AppState>) -> impl IntoResponse {
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
+
+pub async fn add_user() {}
+
+pub async fn add_user_to_group() {}
+
+pub async fn add_group() {}
