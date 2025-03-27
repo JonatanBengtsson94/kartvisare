@@ -19,6 +19,7 @@ DB_PORT=5432
 DB_USER=kartvisare
 DB_PASSWORD=kartvisare
 DB_NAME=kartvisare
+REDIS_URL=redis://localhost:6379
 ```
 2. In the ``/backend`` directory, run the following command to start the backend:
 ``cargo run``

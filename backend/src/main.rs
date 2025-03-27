@@ -9,8 +9,14 @@ use axum::{
 };
 use controller::{user_controller, wms_controller};
 use middleware::auth::auth_middleware;
-use repository::{user_repository::PostgresUserRepository, wms_repository::PostgresWmsRepository};
-use service::{idp_service::MockIdpService, user_service::UserService, wms_service::WmsService};
+use repository::{
+    session_store::RedisSessionStore, user_repository::PostgresUserRepository,
+    wms_repository::PostgresWmsRepository,
+};
+use service::{
+    idp_service::MockIdpService, session_service::SessionService, user_service::UserService,
+    wms_service::WmsService,
+};
 use sqlx::PgPool;
 
 mod controller;
@@ -36,6 +42,7 @@ async fn main() {
     let db_user = env::var("DB_USER").expect("DB_USER must be set in the environment");
     let db_password = env::var("DB_PASSWORD").expect("DB_PASSWORD must be set in the environment");
     let db_name = env::var("DB_NAME").expect("DB_NAME must be set in the environment");
+    let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set in the environment");
 
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",
@@ -46,6 +53,8 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
+    let redis_client = redis::Client::open(redis_url).expect("Invalid Redis URL");
+
     let user_repository = PostgresUserRepository::new(pool.clone());
     let user_service = UserService::new(user_repository);
 
@@ -53,6 +62,9 @@ async fn main() {
     let wms_service = WmsService::new(wms_repository);
 
     let idp_service = MockIdpService::new();
+
+    let session_store = RedisSessionStore::new(redis_client);
+    let session_service = SessionService::new(session_store);
 
     let app_state = AppState {
         user_service,
