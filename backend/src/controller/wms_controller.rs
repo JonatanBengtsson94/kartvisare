@@ -37,7 +37,11 @@ pub async fn get_wms_by_id(
 pub async fn add_wms(
     State(state): State<AppState>,
     Json(payload): Json<WmsDetails>,
+    Extension(session): Extension<Session>,
 ) -> impl IntoResponse {
+    if !session.is_admin {
+        return StatusCode::FORBIDDEN.into_response();
+    }
     match state.wms_service.add_wms(payload).await {
         Ok(wms_id) => (StatusCode::CREATED, Json(wms_id)).into_response(),
         Err(RepoError::Forbidden) => StatusCode::FORBIDDEN.into_response(),
