@@ -1,5 +1,6 @@
+#[derive(Clone)]
 pub struct Session {
-    session_id: String,
-    user_id: i32,
-    is_admin: bool,
+    pub session_id: String,
+    pub user_id: i32,
+    pub is_admin: bool,
 }
