@@ -13,12 +13,12 @@ impl<S: SessionStore> SessionService<S> {
         SessionService { store }
     }
 
-    pub async fn create_session(&self, user_id: i32) -> Result<Session, RepoError> {
+    pub async fn create_session(&self, user_id: i32, is_admin: bool) -> Result<Session, RepoError> {
         // TODO: Create a session in the store
         Ok(Session {
-            user_id: 1,
-            session_id: "abc".to_string(),
-            is_admin: false,
+            session_id: None
+            user_id: user_id,
+            is_admin: is_admin,
         })
     }
 

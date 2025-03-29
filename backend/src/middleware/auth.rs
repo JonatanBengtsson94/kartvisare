@@ -47,9 +47,15 @@ pub async fn auth_middleware<B>(
             .await
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
+        let is_admin = state
+            .user_service
+            .is_admin(user_id)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
         session = state
             .session_service
-            .create_session(user_id)
+            .create_session(user_id, is_admin)
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     }

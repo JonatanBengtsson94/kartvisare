@@ -34,6 +34,11 @@ impl<R: UserRepository> UserService<R> {
         self.repository.add_user_group(group_name).await?;
         Ok(())
     }
+
+    pub async fn is_admin(&self, user_id: i32) -> Result<bool, RepoError> {
+        let is_admin = self.repository.is_admin(user_id).await?;
+        Ok(is_admin)
+    }
 }
 
 #[cfg(test)]

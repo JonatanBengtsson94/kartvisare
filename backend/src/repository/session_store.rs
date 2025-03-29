@@ -2,7 +2,14 @@ use crate::domain::session::Session;
 
 use super::repo_error::RepoError;
 use async_trait::async_trait;
-use redis::Client;
+use redis::{AsyncCommands, Client};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct SessionData {
+    user_id: i32,
+    is_admin: bool,
+}
 
 #[derive(Clone)]
 pub struct RedisSessionStore {
@@ -18,7 +25,7 @@ impl RedisSessionStore {
 #[async_trait]
 pub trait SessionStore {
     async fn load_session(&self, session_id: &str) -> Option<Session>;
-    async fn save_session(&self, session_id: &str, session: &Session) -> Result<(), RepoError>;
+    async fn save_session(&self, user_id: i32, is_admin: bool) -> Result<Session, RepoError>;
 }
 
 #[async_trait]
@@ -27,8 +34,28 @@ impl SessionStore for RedisSessionStore {
         // TODO
         None
     }
-    async fn save_session(&self, session_id: &str, session: &Session) -> Result<(), RepoError> {
-        // TODO
-        Ok(())
+    async fn save_session(&self, user_id: i32, is_admin: bool) -> Result<Session, RepoError> {
+        let session_data = SessionData { user_id, is_admin };
+        let session_json =
+            serde_json::to_string(&session_data).map_err(RepoError::SerializationError)?;
+
+        let session_id = uuid::Uuid::new_v4().to_string();
+
+        let mut con = self
+            .client
+            .get_multiplexed_async_connection()
+            .await
+            .map_err(RepoError::RedisError)?;
+
+        let _: () = con
+            .set(&session_id, &session_json)
+            .await
+            .map_err(RepoError::RedisError)?;
+
+        Ok(Session {
+            session_id,
+            user_id,
+            is_admin,
+        })
     }
 }
