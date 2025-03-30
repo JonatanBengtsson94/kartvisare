@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { WmsGroup, Wms } from "../types/wmsTypes.ts";
+import { fetchWmsGroups, fetchWmsById } from "../services/api.ts";
 import WmsTreeView from "./WmsTreeView.tsx";
 import Canvas from "./Canvas.tsx";
 
@@ -12,17 +13,14 @@ function MapViewer(): React.FC {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const wmsApiUrl = import.meta.env.VITE_API_BASEURL + "/wms";
+  useEffect(() => {
+    const currentUrl = window.location.href;
+    localStorage.setItem("redirectAfterLogin", currentUrl);
+  }, []);
 
   useEffect(() => {
-    fetch(wmsApiUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch WMS list");
-        }
-        return response.json();
-      })
-      .then((data: WmsGroup[]) => {
+    fetchWmsGroups()
+      .then((data) => {
         setWmsGroups(data);
         setLoading(false);
       })
@@ -40,15 +38,7 @@ function MapViewer(): React.FC {
     if (idsToFetch.length > 0) {
       setLoading(true);
       setError(null);
-      Promise.all(
-        idsToFetch.map((id) =>
-          fetch(`${wmsApiUrl}/${id}`)
-            .then((response) => response.json())
-            .catch((error) => {
-              throw new Error("Failed to fetch wms with ID ${id}");
-            }),
-        ),
-      )
+      Promise.all(idsToFetch.map((id) => fetchWmsById(id)))
         .then((newWmsLayers: Wms[]) => {
           setSelectedWms((prevSelectedWms) => [
             ...prevSelectedWms,

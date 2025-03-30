@@ -14,12 +14,19 @@ pub async fn auth_middleware<B>(
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let session_header = request.headers().get("X-Session-ID");
+    let cookies = request.headers().get("Cookie");
 
-    let session_id = match session_header {
-        Some(session_id) => session_id.to_str().ok(),
-        None => None,
-    };
+    let session_id = cookies
+        .and_then(|cookies| cookies.to_str().ok())
+        .and_then(|cookie_str| {
+            cookie_str.split(";").find_map(|cookie| {
+                if cookie.trim().starts_with("X-Session-ID=") {
+                    Some(cookie.trim().split("=").nth(1).unwrap().to_string())
+                } else {
+                    None
+                }
+            })
+        });
 
     let session;
 
@@ -60,7 +67,7 @@ pub async fn auth_middleware<B>(
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     }
     let cookie_value = format!(
-        "X-Session-ID={}; Path=/; HttpOnly; Secure",
+        "X-Session-ID={}; Path=/; HttpOnly; Secure; SameSite=None",
         session.session_id
     );
     request.extensions_mut().insert(session);
