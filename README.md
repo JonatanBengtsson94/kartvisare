@@ -1,24 +1,33 @@
-# Kartvisare
-En webapp för att visa olika kartlager
+# Kartvisare - Map Viewer
+Kartvisare is a web application designed to display different map layers. The application includes user-specific access controls and idp integration.
 
-## Lokalmiljö
-### Databas
-Kör /databas/setup_db.sh
+## Local development environment
+### Prerequisites
+Rust (for backend development)
+Node.js and npm (for frontend development)
+Docker (for local database)
 
-### Backend
-Skapa en .env fil under /backend med följande innehåll:
+### Database Setup
+1. Run the database setup script. 
+``/databas/setup_db.sh``
+
+### Backend Setup
+1. In the ``/backend`` directory, create a ``.env`` file with the following content:
 ```
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=kartvisare
 DB_PASSWORD=kartvisare
 DB_NAME=kartvisare
+REDIS_URL=redis://localhost:6379
 ```
-Starta applikationen genom att köra ``cargo run`` i /backend
+2. In the ``/backend`` directory, run the following command to start the backend:
+``cargo run``
 
 ### Frontend
-Skapa en .env fil under /frontend med följande innehåll:
+1. In the ``/frontend`` directory, create a ``.env`` file with the following content:
 ```
 VITE_API_BASEURL=http://localhost:3000
 ```
-Starta frontend genoma att köra ``npm run dev`` i /frontend
+2. In the ``/frontend`` directory run ``npm install`` to install dependencies
+3. In the ``/frontend`` directory run ``npm run dev`` to start the frontend
