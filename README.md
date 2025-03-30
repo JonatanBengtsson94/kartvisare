@@ -28,6 +28,7 @@ REDIS_URL=redis://localhost:6379
 1. In the ``/frontend`` directory, create a ``.env`` file with the following content:
 ```
 VITE_API_BASEURL=http://localhost:3000
+VITE_LOGIN_URL="http://localhost:5173/mock-login"
 ```
 2. In the ``/frontend`` directory run ``npm install`` to install dependencies
 3. In the ``/frontend`` directory run ``npm run dev`` to start the frontend
